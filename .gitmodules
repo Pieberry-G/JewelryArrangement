@@ -4,7 +4,7 @@
 	branch = DDG
 [submodule "deps/polyscope"]
 	path = deps/polyscope
-	url = https://github.com/nzfeng/polyscope.git
+	url = https://github.com/Pieberry-G/polyscope.git
 	branch = DDG
 [submodule "deps/googletest"]
 	path = deps/googletest
