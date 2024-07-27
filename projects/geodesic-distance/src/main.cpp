@@ -34,9 +34,11 @@ polyscope::SurfaceGraphQuantity* currVert; // currently active vertex
 Vector<double> SOLUTION;
 polyscope::SurfaceVertexColorQuantity* solnColors;
 polyscope::SurfaceGraphQuantity* isolines;
+polyscope::SurfaceGraphQuantity* strokelines;
 double maxPhi = 0.0;
 double vertexRadius;
 double isolinesRadius;
+double strokelinesRadius;
 
 
 void flipZ() {
@@ -75,6 +77,25 @@ void setColors(const std::vector<std::array<double, 3>>& colors) {
     solnColors->setEnabled(true);
 }
 
+/*
+ * Display stroke.
+ */
+void showStroke() {
+
+    std::vector<Vector3> positions;
+    std::vector<std::array<size_t, 2>> edgeInds;
+    std::vector<glm::vec4>& stroke = polyscope::state::stroke;
+    for (size_t i = 0; i < stroke.size(); i++) {
+        positions.push_back({stroke[i].x, stroke[i].y, stroke[i].z});
+        if (i > 0) {
+            edgeInds.push_back({i - 1, i});
+        }
+    }
+    strokelines = psMesh->addSurfaceGraphQuantity("Stroke", positions, edgeInds);
+    strokelines->setEnabled(true);
+    strokelines->setRadius(strokelinesRadius);
+    strokelines->setColor({0.0, 0.0, 0.0});
+}
 
 /*
  * Display isolines.
@@ -168,6 +189,8 @@ void functionCallback() {
     if (ImGui::Button("Reset")) {
         polyscope::state::subset.vertices.clear();
         polyscope::state::currVertexIndex = -1;
+        polyscope::state::stroke.clear();
+        showStroke();
         psMesh->setSurfaceColor({1.0, 0.45, 0.0});
         solnColors->setEnabled(false);
         isolines->setEnabled(false);
@@ -227,6 +250,7 @@ int main(int argc, char** argv) {
     double lengthScale = geometry->meanEdgeLength();
     vertexRadius = lengthScale * 0.2;
     isolinesRadius = lengthScale * 0.05;
+    strokelinesRadius = lengthScale * 0.15;
     psMesh->setSmoothShade(true);
     psMesh->setSurfaceColor({1.0, 0.45, 0.0}); // orange
     currVert =

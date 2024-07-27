@@ -2,6 +2,7 @@
 #include "simplicial-complex-operators.h"
 #include <unordered_map>
 #include <chrono>
+#include <numeric>
 
 // #define USE_SPARSE_MATRIX
 #define MEASURE_PERFORMANCE
