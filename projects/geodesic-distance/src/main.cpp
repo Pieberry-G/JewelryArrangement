@@ -38,6 +38,7 @@ polyscope::SurfaceGraphQuantity* strokelines;
 double maxPhi = 0.0;
 double vertexRadius;
 double isolinesRadius;
+// Added by cyh
 double strokelinesRadius;
 
 
@@ -77,6 +78,7 @@ void setColors(const std::vector<std::array<double, 3>>& colors) {
     solnColors->setEnabled(true);
 }
 
+// Added by cyh
 /*
  * Display stroke.
  */
@@ -219,6 +221,8 @@ int main(int argc, char** argv) {
 
     // If a mesh name was not given, use default mesh.
     std::string filepath = "../../../input/bunny.obj";
+    //std::string filepath = "../../../input/rings/ring0.obj";
+    //std::string filepath = "../../../input/diamonds/diamond1.obj";
     if (inputFilename) {
         filepath = args::get(inputFilename);
     }
@@ -248,9 +252,10 @@ int main(int argc, char** argv) {
     // Initalize
     flipZ();
     double lengthScale = geometry->meanEdgeLength();
+    polyscope::state::edgeLengthScale = lengthScale;
     vertexRadius = lengthScale * 0.2;
     isolinesRadius = lengthScale * 0.05;
-    strokelinesRadius = lengthScale * 0.15;
+    strokelinesRadius = 0.005f;
     psMesh->setSmoothShade(true);
     psMesh->setSurfaceColor({1.0, 0.45, 0.0}); // orange
     currVert =
@@ -259,7 +264,7 @@ int main(int argc, char** argv) {
     solnColors = psMesh->addVertexColorQuantity("Solution", std::vector<std::array<double, 3>>(mesh->nVertices()));
     isolines =
         psMesh->addSurfaceGraphQuantity("Isolines", std::vector<Vector3>(), std::vector<std::array<size_t, 2>>());
-    HM = HeatMethod(mesh, geometry);
+    //HM = HeatMethod(mesh, geometry);
     DELTA = Vector<double>::Zero(mesh->nVertices());
 
     // Give control to the polyscope gui
