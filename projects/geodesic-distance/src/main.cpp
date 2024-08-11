@@ -17,15 +17,15 @@ using namespace geometrycentral;
 using namespace geometrycentral::surface;
 
 // == Geometry-central data
-std::unique_ptr<ManifoldSurfaceMesh> mesh_uptr;
-std::unique_ptr<VertexPositionGeometry> geometry_uptr;
+std::unique_ptr<ManifoldSurfaceMesh> mesh_uptr, mesh_uptr_diamond;
+std::unique_ptr<VertexPositionGeometry> geometry_uptr, geometry_uptr_diamond;
 // so we can more easily pass these to different classes
-ManifoldSurfaceMesh* mesh;
-VertexPositionGeometry* geometry;
+ManifoldSurfaceMesh* mesh, *mesh_diamond;
+VertexPositionGeometry* geometry, *geometry_diamond;
 
 // Polyscope visualization handle, to quickly add data to the surface
-polyscope::SurfaceMesh* psMesh;
-std::string MESHNAME;
+polyscope::SurfaceMesh* psMesh, *psMesh_diamond;
+std::string MESHNAME, MESHNAME_diamond;
 
 // Some global variables
 HeatMethod HM;
@@ -201,31 +201,12 @@ void functionCallback() {
 }
 
 
-int main(int argc, char** argv) {
-
-    // Configure the argument parser
-    args::ArgumentParser parser("15-458 HW5");
-    args::Positional<std::string> inputFilename(parser, "mesh", "A mesh file.");
-
-    // Parse args
-    try {
-        parser.ParseCLI(argc, argv);
-    } catch (args::Help&) {
-        std::cout << parser;
-        return 0;
-    } catch (args::ParseError& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << parser;
-        return 1;
-    }
+int main() {
 
     // If a mesh name was not given, use default mesh.
-    std::string filepath = "../../../input/bunny.obj";
-    //std::string filepath = "../../../input/rings/ring0.obj";
-    //std::string filepath = "../../../input/diamonds/diamond1.obj";
-    if (inputFilename) {
-        filepath = args::get(inputFilename);
-    }
+    //std::string filepath = "../../../input/bunny.obj";
+    //std::string filepath = "../../../input/rings/ring1.obj";
+    std::string filepath = "../../../input/rings/ring1.obj";
 
     MESHNAME = polyscope::guessNiceNameFromPath(filepath);
 
@@ -267,11 +248,34 @@ int main(int argc, char** argv) {
     //HM = HeatMethod(mesh, geometry);
     DELTA = Vector<double>::Zero(mesh->nVertices());
 
+
+
+
+
+
+
+
+    // Load diamond mesh.
+    std::string diamondFilepath = "../../../input/diamonds/diamond3.obj";
+
+    MESHNAME_diamond = polyscope::guessNiceNameFromPath(diamondFilepath);
+
+    // Load mesh
+    std::tie(mesh_uptr_diamond, geometry_uptr_diamond) = readManifoldSurfaceMesh(diamondFilepath);
+    mesh_diamond = mesh_uptr_diamond.release();
+    geometry_diamond = geometry_uptr_diamond.release();
+
+    psMesh_diamond = polyscope::registerSurfaceMesh(MESHNAME_diamond, geometry_diamond->inputVertexPositions, mesh_diamond->getFaceVertexList(),
+                                       polyscopePermutations(*mesh_diamond));
+
     // Give control to the polyscope gui
     polyscope::show();
 
     delete mesh;
     delete geometry;
+
+    delete mesh_diamond;
+    delete geometry_diamond;
 
     return EXIT_SUCCESS;
 }
