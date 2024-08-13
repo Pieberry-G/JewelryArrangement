@@ -4,14 +4,16 @@
 #include "geometrycentral/surface/meshio.h"
 #include "geometrycentral/surface/vertex_position_geometry.h"
 
+//#include "geometrycentral/surface/intrinsic_triangulation.h"
+//#include "geometrycentral/surface/signpost_intrinsic_triangulation.h"
+//#include "geometrycentral/surface/integer_coordinates_intrinsic_triangulation.h"
+
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
 
-#include "args/args.hxx"
 #include "imgui.h"
 
 #include "colormap.h"
-#include "heat-method.h"
 
 using namespace geometrycentral;
 using namespace geometrycentral::surface;
@@ -28,12 +30,9 @@ polyscope::SurfaceMesh* psMesh, *psMesh_diamond;
 std::string MESHNAME, MESHNAME_diamond;
 
 // Some global variables
-HeatMethod HM;
 Vector<double> DELTA;                      // sources
 polyscope::SurfaceGraphQuantity* currVert; // currently active vertex
-Vector<double> SOLUTION;
 polyscope::SurfaceVertexColorQuantity* solnColors;
-polyscope::SurfaceGraphQuantity* isolines;
 polyscope::SurfaceGraphQuantity* strokelines;
 double maxPhi = 0.0;
 double vertexRadius;
@@ -100,45 +99,6 @@ void showStroke() {
 }
 
 /*
- * Display isolines.
- */
-void showIsolines() {
-
-    std::vector<Vector3> positions;
-    std::vector<std::array<size_t, 2>> edgeInds;
-    double distBetweenLines = maxPhi / 20.0; // enforce spacing
-    for (Face f : mesh->faces()) {
-        std::vector<Vector3> pos;
-        for (Halfedge he : f.adjacentHalfedges()) {
-            double vs = SOLUTION[he.tailVertex().getIndex()];
-            double vd = SOLUTION[he.tipVertex().getIndex()];
-            int region1 = floor(vs / distBetweenLines);
-            int region2 = floor(vd / distBetweenLines);
-            if (region1 != region2) {
-                double val = region2 * distBetweenLines;
-                if (region1 > region2) {
-                    val = region1 * distBetweenLines;
-                }
-                double t = (val - vs) / (vd - vs);
-                Vector3 ps = geometry->inputVertexPositions[he.tailVertex()];
-                Vector3 pd = geometry->inputVertexPositions[he.tipVertex()];
-                Vector3 p = ps + t * (pd - ps);
-                pos.push_back(p);
-            }
-        }
-        if (pos.size() == 2) {
-            positions.push_back(pos[0]);
-            positions.push_back(pos[1]);
-            edgeInds.push_back({positions.size() - 2, positions.size() - 1});
-        }
-    }
-    isolines = psMesh->addSurfaceGraphQuantity("Isolines", positions, edgeInds);
-    isolines->setEnabled(true);
-    isolines->setRadius(isolinesRadius);
-    isolines->setColor({0.0, 0.0, 0.0});
-}
-
-/*
  * Show selected vertices.
  * This function gets called every time an element is selected on-screen.
  */
@@ -178,16 +138,6 @@ void redraw() {
 
 void functionCallback() {
 
-    if (ImGui::Button("Solve")) {
-        if (polyscope::state::subset.vertices.size() > 0) {
-            SOLUTION = HM.compute(DELTA);
-            if (SOLUTION.norm() > 0) {
-                setColors(computeColors(SOLUTION));
-                showIsolines();
-                redraw();
-            }
-        }
-    }
     if (ImGui::Button("Reset")) {
         polyscope::state::subset.vertices.clear();
         polyscope::state::currVertexIndex = -1;
@@ -195,7 +145,6 @@ void functionCallback() {
         showStroke();
         psMesh->setSurfaceColor({1.0, 0.45, 0.0});
         solnColors->setEnabled(false);
-        isolines->setEnabled(false);
         redraw();
     }
 }
@@ -204,9 +153,10 @@ void functionCallback() {
 int main() {
 
     // If a mesh name was not given, use default mesh.
-    //std::string filepath = "../input/bunny.obj";
-    //std::string filepath = "../input/rings/ring1.obj";
-    std::string filepath = "../input/rings/ring1.obj";
+    std::string filepath;
+    //filepath = "../input/bunny.obj";
+    filepath = "../input/rings/ring1.obj";
+    filepath = "../input/rings/ring_18.obj";
 
     MESHNAME = polyscope::guessNiceNameFromPath(filepath);
 
@@ -235,7 +185,6 @@ int main() {
     double lengthScale = geometry->meanEdgeLength();
     polyscope::state::edgeLengthScale = lengthScale;
     vertexRadius = lengthScale * 0.2;
-    isolinesRadius = lengthScale * 0.05;
     strokelinesRadius = 0.005f;
     psMesh->setSmoothShade(true);
     psMesh->setSurfaceColor({1.0, 0.45, 0.0}); // orange
@@ -243,9 +192,6 @@ int main() {
         psMesh->addSurfaceGraphQuantity("current vertex", std::vector<Vector3>(), std::vector<std::array<size_t, 2>>());
     // initialize to something in case "Reset" is pressed before anything happens
     solnColors = psMesh->addVertexColorQuantity("Solution", std::vector<std::array<double, 3>>(mesh->nVertices()));
-    isolines =
-        psMesh->addSurfaceGraphQuantity("Isolines", std::vector<Vector3>(), std::vector<std::array<size_t, 2>>());
-    //HM = HeatMethod(mesh, geometry);
     DELTA = Vector<double>::Zero(mesh->nVertices());
 
 
