@@ -36,9 +36,15 @@ polyscope::SurfaceVertexColorQuantity* solnColors;
 polyscope::SurfaceGraphQuantity* strokelines;
 double maxPhi = 0.0;
 double vertexRadius;
+double edgeRadius;
 double isolinesRadius;
 // Added by cyh
 double strokelinesRadius;
+
+glm::vec<3, float> BLUE_VEC = { 0.11, 0.388, 0.89 };
+std::array<double, 3> BLUE = { 0.11, 0.388, 0.89 };
+glm::vec<3, float> ORANGE_VEC = { 1.0, 0.45, 0.0 };
+std::array<double, 3> ORANGE = { 1.0, 0.45, 0.0 };
 
 
 void flipZ() {
@@ -98,37 +104,69 @@ void showStroke() {
     strokelines->setColor({0.0, 0.0, 0.0});
 }
 
+void showLine() {
+
+    std::vector<Vector3> positions;
+    std::vector<std::array<size_t, 2>> edgeInds;
+    std::vector<glm::vec4>& stroke = polyscope::state::stroke;
+    for (size_t i = 0; i < stroke.size(); i++) {
+        positions.push_back({ stroke[i].x, stroke[i].y, stroke[i].z });
+        if (i > 0) {
+            edgeInds.push_back({ i - 1, i });
+        }
+    }
+
+    strokelines = psMesh->addSurfaceGraphQuantity("Stroke", positions, edgeInds);
+    strokelines->setEnabled(true);
+    strokelines->setRadius(strokelinesRadius);
+    strokelines->setColor({ 0.0, 0.0, 0.0 });
+}
+
 /*
  * Show selected vertices.
  * This function gets called every time an element is selected on-screen.
  */
 void showSelected() {
 
-    // Show selected vertices in yellow
-    std::vector<Vector3> vertPos;
-    std::vector<std::array<size_t, 2>> vertInd;
-    DELTA = Vector<double>::Zero(mesh->nVertices());
-    for (std::set<size_t>::iterator it = polyscope::state::subset.vertices.begin();
-         it != polyscope::state::subset.vertices.end(); ++it) {
-        vertPos.push_back(geometry->inputVertexPositions[*it]);
-        DELTA[*it] = 1;
-    }
-    polyscope::SurfaceGraphQuantity* showVerts = psMesh->addSurfaceGraphQuantity("selected vertices", vertPos, vertInd);
-    showVerts->setEnabled(true);
-    showVerts->setRadius(vertexRadius);
-    showVerts->setColor({1.0, 0.65, 0.0});
+    //// Show selected vertices.
+    //std::vector<Vector3> vertPos;
+    //std::vector<std::array<size_t, 2>> vertInd;
+    //for (std::set<size_t>::iterator it = polyscope::state::subset.vertices.begin();
+    //     it != polyscope::state::subset.vertices.end(); ++it) {
+    //    vertPos.push_back(geometry->inputVertexPositions[*it]);
+    //}
+    //polyscope::SurfaceGraphQuantity* showVerts = psMesh->addSurfaceGraphQuantity("selected vertices", vertPos, vertInd);
+    //showVerts->setEnabled(true);
+    //showVerts->setRadius(vertexRadius);
+    //showVerts->setColor(ORANGE_VEC);
 
-    // Show the currently selected vertex in red.
-    int currIdx = polyscope::state::currVertexIndex;
-    if (currIdx != -1) {
-        std::vector<Vector3> pos = {geometry->inputVertexPositions[currIdx]};
-        currVert = psMesh->addSurfaceGraphQuantity("current vertex", pos, std::vector<std::array<size_t, 2>>());
-        currVert->setEnabled(true);
-        currVert->setRadius(vertexRadius);
-        currVert->setColor({1.0, 0.0, 0.0});
-    } else {
-        currVert->setEnabled(false);
+    //// Show selected edges.
+    //std::vector<Vector3> edgePos;
+    //std::vector<std::array<size_t, 2>> edgeInd;
+    //for (std::set<size_t>::iterator it = polyscope::state::subset.edges.begin();
+    //     it != polyscope::state::subset.edges.end(); ++it) {
+    //    Edge e = mesh->edge(*it);
+    //    edgePos.push_back(geometry->inputVertexPositions[e.firstVertex()]);
+    //    edgePos.push_back(geometry->inputVertexPositions[e.secondVertex()]);
+    //    size_t i = edgeInd.size();
+    //    edgeInd.push_back({2 * i, 2 * i + 1});
+    //}
+    //polyscope::SurfaceGraphQuantity* showEdges = psMesh->addSurfaceGraphQuantity("selected edges", edgePos, edgeInd);
+    //showEdges->setEnabled(true);
+    //showEdges->setRadius(edgeRadius);
+    //showEdges->setColor(BLUE_VEC);
+
+    // Show selected faces.
+    std::vector<std::array<double, 3>> faceColors(mesh->nFaces());
+    for (size_t i = 0; i < mesh->nFaces(); i++) {
+        faceColors[i] = ORANGE;
     }
+    for (std::set<size_t>::iterator it = polyscope::state::subset.faces.begin();
+         it != polyscope::state::subset.faces.end(); ++it) {
+        faceColors[*it] = {0.5, 0, 0.5};
+    }
+    polyscope::SurfaceFaceColorQuantity* showFaces = psMesh->addFaceColorQuantity("selected faces", faceColors);
+    showFaces->setEnabled(true);
 }
 
 void redraw() {
@@ -184,10 +222,11 @@ int main() {
     flipZ();
     double lengthScale = geometry->meanEdgeLength();
     polyscope::state::edgeLengthScale = lengthScale;
-    vertexRadius = lengthScale * 0.2;
+    vertexRadius = 0.005f;
+    vertexRadius = 0.005f;
     strokelinesRadius = 0.005f;
     psMesh->setSmoothShade(true);
-    psMesh->setSurfaceColor({1.0, 0.45, 0.0}); // orange
+    psMesh->setSurfaceColor(ORANGE_VEC); // orange
     currVert =
         psMesh->addSurfaceGraphQuantity("current vertex", std::vector<Vector3>(), std::vector<std::array<size_t, 2>>());
     // initialize to something in case "Reset" is pressed before anything happens
