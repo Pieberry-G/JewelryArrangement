@@ -1,12 +1,6 @@
-// HEAT METHOD
-
 #include "geometrycentral/surface/manifold_surface_mesh.h"
 #include "geometrycentral/surface/meshio.h"
 #include "geometrycentral/surface/vertex_position_geometry.h"
-
-//#include "geometrycentral/surface/intrinsic_triangulation.h"
-//#include "geometrycentral/surface/signpost_intrinsic_triangulation.h"
-//#include "geometrycentral/surface/integer_coordinates_intrinsic_triangulation.h"
 
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -37,7 +31,6 @@ polyscope::SurfaceGraphQuantity* strokelines;
 double maxPhi = 0.0;
 double vertexRadius;
 double edgeRadius;
-double isolinesRadius;
 // Added by cyh
 double strokelinesRadius;
 
@@ -102,24 +95,6 @@ void showStroke() {
     strokelines->setEnabled(true);
     strokelines->setRadius(strokelinesRadius);
     strokelines->setColor({0.0, 0.0, 0.0});
-}
-
-void showLine() {
-
-    std::vector<Vector3> positions;
-    std::vector<std::array<size_t, 2>> edgeInds;
-    std::vector<glm::vec4>& stroke = polyscope::state::stroke;
-    for (size_t i = 0; i < stroke.size(); i++) {
-        positions.push_back({ stroke[i].x, stroke[i].y, stroke[i].z });
-        if (i > 0) {
-            edgeInds.push_back({ i - 1, i });
-        }
-    }
-
-    strokelines = psMesh->addSurfaceGraphQuantity("Stroke", positions, edgeInds);
-    strokelines->setEnabled(true);
-    strokelines->setRadius(strokelinesRadius);
-    strokelines->setColor({ 0.0, 0.0, 0.0 });
 }
 
 /*
